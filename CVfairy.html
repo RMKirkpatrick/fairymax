@@ -1,0 +1,596 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head><title>Fairy-Max</title>
+<META name="Author" content="H.G.Muller">
+<META name="keywords" content="chess, variation, variant, variants">
+<LINK href="../g/global.css" rel="stylesheet" type="text/css">
+</head>
+<body bgcolor="#fffff0" vlink="#ff0000"> 
+
+<table><tr><td width="200"></td><td>
+<h3>Downloads</h3>
+<p><a href="http://hgm.nubati.net/Fairy-Max.zip">Fairy-Max Windows executable and source</a> (includes ShaMax.exe and MaxQi.exe, and logo)</p>
+<p><a href="http://hgm.nubati.net/pairomax.zip">Pair-o-Max Windows executable</a> (plus ini file and logo)</p>
+<p><a href="http://hgm.nubati.net/Alice.zip">Looking-Glass executable for Alice Chess</a> (includes ShaMax.exe and MaxQi.exe, and logo)</p>
+<p><a href="http://hgm.nubati.net/fairymax.tar.gz">fairymax sources as tar ball</a> for installing from source on *nix systems (includes maxqi.c)</p>
+</td></tr></table>
+
+<h1>Fairy-Max: an AI for playing user-defined Chess variants</h1>
+
+<p><table width="20%" cellpadding=8 align=right>
+<tr><td bgcolor="#eeeee0"><div class="menu">
+<a href="#intro">Introduction</a>
+<br><a href="#array">Setup</a>
+<br><a href="#pieces">Pieces</a>
+
+<br><a href="#rules">Rules</a>
+<br><a href="#playingtips">Playing Tips</a>
+<br><a href="#equipment">Equipment</a>
+<br><a href="#notes">Notes</a>
+<br><a href="#contact">Contact</a>
+<p>Links to related pages would appear here.
+</div>
+</td></tr>
+</table>
+
+<a name=intro> </a>
+
+<h2>Introduction</h2>
+
+<table><tr><td width="200">
+<img src="./fairysmall.jpg">
+</td><td>
+<p>
+Fairy-Max is an AI, also called 'engine', for playing Chess variants.
+It is free open-source software.
+It was created for the purpose of empirically evaluating fairy pieces,
+by allowing those to participate amongst orthodox Chess pieces
+in Chess games aimed at checkmating an opponent royal piece.
+It searches ahead like the FIDE-Chess engine from which it was derived
+(the World's once smallest Chess program, <a href="max-src2.html">micro-Max</a>)
+by generating moves and trying them out on the internal board.
+To know how each piece type moves, micro-Max uses tables with step vectors,
+and it knows which pieces are leapers and which are sliders.
+In Fairy-Max, the contents of these tables is not fixed,
+but is loaded from a configuration file 'fmax.ini' at the start of each game.
+This allows the user to change the way pieces move
+(or add pieces of his own design) without changing the program,
+by altering the contents of the fmax.ini file.
+Fmax.ini is a normal text file and thus can be modified with any text editor
+(e.g. Notepad).
+</p>
+</td></tr></table>
+<p>
+Fairy-Max is 'only an AI'. 
+This means it does not provide any graphics to display the position of the game it is playing,
+but only relays the moves as text.
+It is primarily designed to be run as an engine inside the <a href="http://hgm.nubati.net">WinBoard</a> GUI,
+(or its Linux counterpart XBoard),
+and it communicates with this GUI in 'WinBoard protocol'.
+Although there are several other GUIs that support WinBoard protocol,
+they will in general not offer as much variant support as WinBoard / XBoard.
+Most GUIs only support normal Chess,
+but ChessGUI by Matthias Gemuh also supports 10x8 Capablanca variants.
+Note that there are also many other WinBoard-compatible engines for
+playing variants that can be played under WinBoard 4.3 or higher.
+Some even play variants that Fairy-Max could never implement
+(e.g. Xiangqi or Crazyhouse).
+
+</p><p>
+There are however some dedicated versions of Fairy-Max that are adapted to variants
+with very unique needs,
+such as the Shatranj baring rule, or the confinement of pieces to certain board areas in Xiangqi.
+These versions, known as ShaMax and MaxQi, respectively, are in general only useful for playing
+a single Chess variant, and are included in the downloads listed at the top of this page.
+There also is a derivative 'Looking Glass', which plays Alice Chess.
+There also exists a special research derivative <a href="mating.html">'Pair-o-Max'</a>,
+which does take into account mating potential in the late end-game.
+</p>
+<a name=array> </a>
+
+<table><tr><td>
+<h2>Setup</h2>
+
+<p>
+Fairy-Max can be downloaded in both Windows and Linux versions
+through the links at the top of this page.
+It is also included in the standard distribution of WinBoard, however,
+where it is pre-installed as primary engine, and can be started from the Windows Start menu.
+The Windows Fairy-Max package contains the engine executable, 
+the fmax.ini (which contains its own format description),
+and the engine source code, all grouped inside a folder.
+To install it, just extract this folder to a suitable place on your hard disk.
+Recommended is to put this folder next to the one where you installed WinBoard.
+WinBoard has a Load Engine dialog in its Engine menu,
+which you could use to install Fairy-Max (or any other engine) by simply pointing out the exe file in a file-browse dialog.
+It needs no special parameters or options.
+</p>
+<p>
+Fairy-Max'  hash table size can be set through WinBoard's Common Engine Options dialog,
+and is responsible for almost its memory usage.
+(It is rounded down to 12 times a power of two, e.g. 48MB, 96MB, 192MB)
+If this does not comfortably fit in memory together with the
+engine process of the opponent (if there is a computer opponent),
+Fairy-Max will not run properly, and you would have to reduce the hash size.
+</p><p>
+For a detailed explanation of the variants that Fairy-Max can play,
+see the website of <a href="http://www.chessvariants.org">chessvariants.org</a>
+</p><p>
+The piece descriptions in the fmax.ini file are grouped into variants,
+so that setting the engine to a certain variant (from the User Interface),
+will load the group of piece descriptions for that variant.
+The Fairy-Max download comes with an fmax.ini that predefines
+several variants 
+(FIDE Chess, Capablanca Chess, Shatranj, Courier, Knightmate, Cylinder Chess),
+which can serve as an example for those that want to implement their own variants.
+In addition, the fmax.ini file contains definitions of the most common fairy pieces not participating in the predefined variants,
+so that the user can draw on them when composing his own variants.
+Although Fairy-Max supports merely 15 different piece types,
+this is only a limitation to the number of different piece types that
+can participate simultaneously in a single game.
+In a game of another variant, all 15 pieces could move completely differently.
+</p>
+</td><td width="550">
+
+<h3>Table 1: Variants pre-defined in the supplied fmax.ini</h3>
+<table cellpadding="5" border="1" bgcolor="lightyellow"><tr><td>
+normal
+</td><td>
+FIDE's good old mad-queen game
+</td></tr><tr><td>
+shatranj
+</td><td>
+Arabic precursor of Chess with Elephants in stead of Bishops (best played with ShaMax)
+</td></tr><tr><td>
+capablanca
+</td><td>
+
+10x8 variant with Archbishop and Chancellor
+</td></tr><tr><td>
+gothic
+</td><td>
+Patented variant similar to Capablanca, with a more exciting opening setup
+</td></tr><tr><td>
+courier
+</td><td>
+12x8 Medieval variant, combining Shatranj pieces with the modern Bishop
+</td></tr><tr><td>
+knightmate
+</td><td>
+King moves like Knight, and vice versa
+</td></tr><tr><td>
+cylinder
+</td><td>
+The board has no left or right edges, pieces wrap around
+
+</td></tr><tr><td>
+berolina
+</td><td>
+8x8 variant where Pawns capture straight ahead, and move diagonally
+</td></tr><tr><td>
+super
+</td><td>
+Superchess, an 8x8 shuffle variant with 4 super-pieces, including Amazon
+</td></tr><tr><td>
+great
+</td><td>
+Great Shatranj, a 10x8 variant where all sliders are replaced by corresponding short-range pieces
+</td></tr><tr><td>
+seirawan
+</td><td>
+S-Chess, where a R+N and B+N compund start in hand and can be gated onto the 8x8 board
+</td></tr><tr><td>
+spartan
+</td><td>
+Spartan Chess, where a completely unorthodox army with two kings (the Spartans) battle the regular (Persian) FIDE army
+</td></tr><tr><td>
+makruk
+</td><td>
+Thai Chess, a Shatranj-like variant where Elephants are replaced by Gold Generals, and Pawns start on 3rd rank
+</td></tr><tr><td>
+falcon
+</td><td>
+On 10x8 with two 'falcon' pieces (multi-path lame (1,3)+(2,3) leapers)
+</td></tr><tr><td>
+-
+</td><td>
+Chess with Different Amies: the FIDE army, the Colorbound Cobberers, the Nutty Knights or Remarkable Rookies battle each other
+</td></tr><tr><td>
+xiangqi
+</td><td>
+Chinese Chess (9x10 board) with Elephants, Cannons, and a King confined to a 3x3 Palace
+(only with MaxQi)
+</td></tr><tr><td>
+
+fairy
+</td><td>
+A catch-all variant, in which by default any piece can participate.
+Fairy-Max redefines the meaning of this variant as specified by a combobox option.
+</td></tr></table>
+</td></tr></table>
+
+<p>
+The board size for each variant is also defined in the fmax.ini file,
+and is currently limited to 12x8.
+(Expansion of the number of ranks is on the to-do list.)
+The default opening position is also defined in there,
+but can be overruled by loading a position through the User Interface.
+</p>
+
+<a name=pieces> </a>
+<h2>Pieces</h2>
+
+<table><tr><td width="420">
+<h3>Table 2: attributes that can be combined to define a move type</h3>
+<table border="1" bgcolor="lightgreen"><tr><td>
+C
+</td><td>
+capture
+</td><td>
+target square is valid if occupied by enemy piece
+</td></tr><tr><td>
+N
+</td><td>
+non-capture
+</td><td>
+target square is valid if empty
+</td></tr><tr><td>
+T
+</td><td>
+terminate
+</td><td>
+move cannot continue, even if target square is empty
+</td></tr><tr><td>
+H
+</td><td>
+hopper
+</td><td>
+move can continue if target square was occupied
+</td></tr><tr><td>
+W
+</td><td>
+wrap
+</td><td>
+treat board like left edge borders right (cylinder board)
+</td></tr><tr><td>
+M
+</td><td>
+multi-path
+</td><td>
+special move mode for Falcon in Falcon Chess
+</td></tr></table>
+
+</td><td>
+
+<p>
+Apart from Pawns, orthodox Chess pieces only come in two different types: 
+leapers and sliders.
+Leapers can only do one step of a given type, 
+while sliders can repeat their elementary step indefinitely, 
+as long as they do not encounter an obstruction (piece or board edge).
+If the obstruction is an enemy piece, it can be captured,
+(both by leapers and sliders),
+but the move cannot continue after that even for a slider.
+</p>
+<p>
+As not all fairy pieces fall in the slider or leaper category,
+Fairy-Max implements two additional move types: hoppers and alternators.
+Hoppers are sliders that can jump over the first obstruction in their path,
+and continue from there, with possibly a different type of move.
+The best known examples are the Cannon (Pao) from Chinese Chess,
+and the Grasshopper.
+The Pao changes its move type from 'non-capture only' to 'capture only' on hopping.
+The Grasshopper changes it from 'none' to 'both' (capture and non-capture),
+and in addition changes from slider to leaper.
+(It is only allowed to do one step after the hop,
+in contrast to the Pao, which remains a slider after hopping.)
+</p>
+</td></tr></table>
+<p>
+Alternators are pieces that do not need to hop over anything to change
+their move type, but do so spontaneously after every step they make.
+This can be a change in step direction, to provide bend trajectories, 
+but also in capture rights.
+E.g. a Xiangqi Elephant makes 2 diagonal steps in the same direction,
+on the first step it is not allowed to do anything (capture or non-capture) but continue, (if the square is empty, of course),
+on the second step it can both capture and non-capture (but is not allowed to continue any further, even if the square was empty).
+The Xiangqi Horse is similar, but also changes direction between the first and second step.
+</p><p>
+The Crooked Bishop is an example of a slider that changes direction on every step.
+This means both its primary and secondary step allow slider-like continuation.
+After the second step it switches back to its first, 
+and continues alternating on every subsequent step.
+For simplicity, Fairy-Max treats every slider that is not a hopper as an alternator.
+In cases where this is not desired (e.g. for the Rook),
+it simply 'alternates' between two identical steps.
+</p><p>
+To provide flexibility in implementation of fairy pieces,
+the discription of the move type has to be given for each direction separately,
+rather than for the piece as a whole.
+This to allow mixed sliders/leapers, such as the Archbishop, 
+which combines the Knight (leaper) and Bishop (slider) moves.
+For implementation of hoppers and alternators,
+the move description (direction and type) has to be given twice
+(primary and secondary move descriptor).
+The method used for that in the fmax.ini file is to specify
+which bits should change to make the secondary step and move rights out of the primary.
+This info can be used to change them in both directions (primary -> secondary and secondary -> primary),
+which is convenient for alternators.
+It also means that for 'normal' pieces, where nothing changes as primary and secondary step are the same,
+the secondary rights and step are all zero, and don't have to be written.
+Since version 4.8S a 2-bit 'delay count' can be specified with each piece
+to delay the first toggle between primary and secondary step type by 1, 2 or 3 steps,
+which allows implementation of limited-range sliders of ranges upto 5.
+</p><p>
+
+Fairy-Max makes no assumptions to the symmetry of the piece,
+meaning that all directions in which the piece moves have to be specified explicitly.
+E.g. for a Rook we have to list 4 moves, for a Knight 8.
+However annoying this sometimes might be,
+this is necessary for allowing implementation of
+asymmetric pieces such as the Crab or the Shogi Generals.
+Unfortunately, Fairy-Max is not smart enough yet to realize that the different
+sides play in opposite direction.
+Thus asymmetric pieces (such as Pawns) have to be implemented as different
+piece types for white and black.
+(E.g. what is a Crab for white, will be a Barc for black, and vice versa.)
+The following pieces have predefined descriptions in fmax.ini,
+ready for copying to your own variants.
+</p>
+<h3>Table 3: Pieces that are pre-defined in the fmax.ini that comes with the download</h3>
+<table border="1" cellpadding="5">
+
+<tr bgcolor="yellow"><td>
+SIMPLE LEAPERS
+</td><td>
+COMPOUND LEAPERS
+</td><td bgcolor="lightgreen">
+LEAPER-SLIDER COMPOUND
+</td><td bgcolor="lightblue">
+SLIDERS
+</td><td>
+LAME LEAPERS
+</td><td bgcolor="magenta">
+
+CYLINDER PIECES
+</td></tr>
+
+<tr><td>
+Ferz
+</td><td>
+King / Commoner
+</td><td>
+Archbishop
+</td><td>
+Bishop
+</td><td>
+Elephant (Xiangqi)
+</td><td>
+Cylinder Bishop
+</td></tr>
+
+<tr><td>
+Wazir
+</td><td>
+Bison
+</td><td>
+Chancellor
+</td><td>
+Rook
+</td><td>
+Horse (Xiangqi)
+</td><td>
+Cylinder Rook
+</td></tr>
+
+<tr><td>
+Knight
+</td><td>
+
+Wildebeest
+</td><td>
+Caliph
+</td><td>
+Nightrider
+</td><td>
+Falcon
+</td><td>
+Cylinder Knight
+</td></tr>
+
+<tr><td>
+Dabbaba
+</td><td>
+Carpenter
+</td><td>
+Canvasser
+
+</td><td>
+Queen
+</td><td bgcolor="red">
+SEPARATE CAPTURE
+</td><td>
+Cylinder Queen
+</td></tr>
+
+<tr><td>
+Elephant (Alfil)
+</td><td>
+Kangaroo
+</td><td>
+Amazon
+</td><td>
+Crooked Bishop
+</td><td>
+
+FIDE Pawn
+</td><td>
+Cylinder Pawn
+</td></tr>
+
+ 
+<tr><td>
+Camel
+</td><td>
+High Priestess
+</td><td bgcolor="purple">
+HOPPERS
+</td><td bgcolor="lightblue">
+LIMITED RANGE
+</td><td>
+Shatranj Pawn
+</td><td>
+
+</td></tr>
+
+<tr><td>
+Zebra
+</td><td>
+Minister
+</td><td>
+Grasshopper
+</td><td>
+Rook-3
+</td><td>
+Quing
+</td><td>
+
+</td></tr>
+
+<tr><td>
+
+</td><td>
+Crab / Barc
+</td><td>
+Cannon (Xiangqi)
+</td><td>
+Bishop-4
+</td><td>
+Keen
+</td></tr></table>
+
+<a name=rules> </a>
+<h2>Rules</h2>
+
+<p>
+This section gives an indication of how the Chess variants are defined
+in the fmax.ini file.
+After a line "Game: <NAME>" to indicate that a new variant description follows,
+we have lines that specify the board size,
+and the back rank of the array for white and black.
+(Fairy-Max always assumed a close rank of Pawns directly in front of that.)
+A name can be prefixed with "fairy/", meaning that it is not supported by WinBoard,
+and has to be played as the catch-all vatiant "fairy".
+An engine option (appearing in the GUI's Engine Settings dialog)
+will in this case determine what variant is really played (identified by the part of the name after the slash).
+</p><p>
+The variant name can be followed by a # and extra information.
+In such a case Fairy-Max will send a 'setup' command to the GUI to inform it of the default opening
+position for the variant, possibly accompanied by the info behind the #,
+which designates the one-letter piece ID with which the GUI should represent the various pieces.
+After the three initial lines follow the descriptions of all participating pieces,
+one line per piece.
+</p><p>
+For each piece, we have to give the letter by which it is represented
+when feeding a position to the engine,
+and the value the engine should attach to it in play.
+(So beware, Fairy-Max is not smart enough to figure this out by itself.
+If you tell it an immensely powerful piece like a Queen is only worth half a Pawn,
+it will happily trade it for one!)
+Then follows on the same line a list of move descriptors, 
+one for each direction the piece moves in.
+A move description consists of an elementary board step,
+and a number that specifies the move attributes,
+i.e. what the piece is allowed to do in this direction
+(if it can capture and/or non-capture, if it is leaper or slider,
+if it can hop over an obstacle or not, 
+if it respects the board edges or wraps around.)
+The exact way the step vectors and attributes are encoded
+is specified in comment lines contained in the fmax.ini,
+as it might still be subject to change in future versions.
+</p><p>
+The first two pieces specified are by definition the white and black Pawns.
+That means that Fairy-Max will let them promote if they reach the last rank.
+Fairy-Max does not think about under-promotion, 
+but always promotes to 'Queen', i.e. the 7th piece specified, however that may move.
+Except when piece number 7 only appears in the initial setup for white, 
+and a piece with number 9 occurs in the initial setup for black,
+in which case black would always promote to piece 9
+(to allow variants with different armies).
+</p><p>
+Any piece with a negative value is considered royal.
+Fairy-Max makes a difference between value -1 and other negative values, though:
+-1 indicates absolute royalty, i.e. loss of any piece of this type means loss of the game.
+Other values indicate only loss of the last royal piece result in loss of the game,
+and any spare ones should be treated as if they are worth the absolute value of the given number.
+This allows for variants with 'delocalized royalty', such as Spartan Chess.
+</p>
+
+<a name=notes> </a>
+<h2>Notes</h2>
+<p>
+There are many things that Fairy-Max cannot do; it was never meant to be a general game-playing system like Zillions of Games.
+Amongst the impossibilities are piece drops, (as in Crazyhouse or Shogi), 
+pieces for which the moves are dependent on their location on the board
+(as in Xiangqi, but MaxQi handles this particular case).
+and pieces whose moving exerts side effects on other squares that their old and new location
+(with the exception of castling and e.p capture).
+For some pieces the move is simply too complicated to fit within the Fairy-Max move-type classification system (e.g. Rose, Griffon).
+</p><p>
+Only boards with 8 ranks are currently implemented.
+
+<p>
+The current version of Fairy-Max implements e.p. capture in such a way that it also correctly handles Berolina Pawns,
+and allows castling with any corner piece.
+</p>
+
+<a name=playingtips> </a>
+<h2>Playing Tips</h2>
+<p>
+Positional evaluation in Fairy-Max is fairly primitive:
+a piece either is drawn towards the center, or not.
+If you want a piece to be drawn to the center,
+you should indicate it by a lower-case letter.
+Pawns do get a large positional bonus when they reach 6th or 7th rank,
+of 64 and 128 units ('centiPawn' in FIDE Chess), respectively.
+This assumes that the piece to which the Pawns will promote is of decisive value,
+so the opponent will have to sacrifice a piece to stop the promotion.
+Unfortunately, this does not work very well in Shatranj and Courier Chess,
+where Pawns promote to the worthless Ferz.
+Recent versions of Faiy-Max divide this bonus by 8 in cases where a "Queen"
+(the piece to which Pawns promote by default)
+is worth less than 250 centi-Pawn, to repair this problem.
+Nevertheless, the strategy of Fairy-Max is tailored too much to normal Chess, with normal Pawns
+to be a really good Shatranj or Courier player.
+</p>
+
+<a name=equipment> </a>
+<h2>Equipment</h2>
+<p>
+
+Fairy-Max runs on a PC under any Windows operating system.
+The memory demand is determined by the size of its hash table,
+which by default is 96M.
+It would still run with a smaller hash table,
+but the larger the hash table, the better its play.
+Running with a hash table smaller than 6MB is not recommended.
+Recently also versions that can run on other platforms, such as Linux, were released.
+</p>
+
+<a name=contact> </a>
+<h2>Contact</h2>
+Questions about Fairy-Max can be posted as comments to the Fairy-Max page
+on the <a href="http://www.chessvariants.org">chessvariants website</a>,
+which are checked regularly by H.G. Muller,
+and of which this page is an adapted version.
+
+<!--#if expr="1=0" -->
+<p>
+<hr>Written by H.G. Muller.
+<hr>WWW page created: July 8, 2008. Last updated: February 28, 2013.
+<!--#else -->
+<!--#include virtual="/g/footerinc1.html" --> 
+<!--#endif -->
+
+</body>
+</html>

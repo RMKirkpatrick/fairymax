@@ -1,0 +1,247 @@
+/***************************************************************************/
+/* micro-Max version 4.8 (~1950 characters) features:                      */
+/* - recursive negamax search                                              */
+/* - all-capture quiescence search with MVV/LVA priority                   */
+/* - (internal) iterative deepening                                        */
+/* - best-move-first 'sorting'                                             */
+/* - a hash table storing score and best move                              */
+/* - futility pruning                                                      */
+/* - king safety through magnetic frozen king                              */
+/* - null-move pruning                                                     */
+/* - Late-move reductions                                                  */
+/* - full FIDE rules (expt minor promotion) and move-legality checking     */
+/* - keep hash + rep-draw detect                                           */
+/* - end-game Pawn-push bonus, new piece values, gradual promotion         */
+/***************************************************************************/
+/* The Fairy-Max version reads the piece description from a file fmax.ini  */
+/* The format supports many fairy pieces, including hoppers.               */
+/* f) now supports 15 piece types, by requisitioning WHITE bit             */
+/* g) supports larger board width.                                         */
+/* h) castling bug ('in-check by non-captures') corrected                  */
+/* i) rep-draw bug ('side-to-move') corrected                              */
+/* k) allow user underpromotions, recognize & ignore 'variant' command     */
+/* l) edit bug corrected (i & j file clear)                                */
+/* m) piece values no longer quantized, game-stage counting bug corrected  */
+/* n) edit-menu K-side castling bug corrected.                             */
+/* o) retrieve the requested variant from the .ini file                    */
+/* p) clear hash table on variant switch                                   */
+/* q) reduced piece-material count for better Pawn push                    */
+/* r) hash-table bug corrected (X still ORed with flags)                   */
+/* s) Bug that prevented initialization center points corrected            */
+/* t) castling bug after edit fixed                                        */
+/* u) converted to protocol 2; ping implemented                            */
+/* v) white e.p. rights hash bug fixed;                                    */
+/* w) piece indicators programable, multi-path support                     */
+/* x) e.p. changed to support Berolina Pawns                               */
+/* y) capture value of 6-7th-rank Pawn reduced in Shatranj                 */
+/* z) bug in promotion input corrected                                     */
+/* A) stalemate-detection bug in printResult fixed                         */
+/* B) Invalidate hash on game-level promotion (might be under-promotion!)  */
+/* C) King move evaluation based on negative piece value in stead of nr    */
+/* D) WB memory command added, undo fixed                                  */
+/* E) 15th piece read in                                                   */
+/* F) accepts ini fileargument                                             */
+/* G) bug in calculation ASCII promotion character fixed                   */
+/* H) unified normal and shatranj source                                   */
+/* J) rewrite under-promotion code, fixes persistent bug there             */
+/* K) o[] and oo[] made int to make fairymax work on big-endian machines   */
+/* L) added Resign option feature (using new WB protocol)                  */
+/* M) char -> signed char for better portability                           */
+/* N) add PV printing and multi-PV support                                 */
+/* O) non-Rook castling, 6th-rank promotion, independent B/W piece naming  */
+/***************************************************************************/
+
+4/6/2009 Unified source of ShaMax and Fairy-Max into single fmax.c file, and
+         created this ChangeLog from the until then self-documenting source.
+
+6/2/2009 Promotion code rewitten to not refer to default piece characters.
+
+9/3/2009 Fixed big-endian bug in reading inifile (char with int format),
+         and added some option features to make Fairy-Max useful as test
+         engine for GUIs that want to implement the WB protocol extensions.
+
+9/16/2009 Made signedness of char in AI explicit
+
+27/12/2009 Added PV updating through the triangular-array method. Also added
+           a multi-PV option to print lines within a certain sccore margin.
+
+15/1/2010 Improved Makefile, updated docs
+          Implement independent naming of white and black pieces. (So mirror-
+          image pieces can use same letter.) 
+          Change castling code to allow castling with any corner piece type.
+          Implement 6th-rank promotion based on 'Queen' value.
+          Makruk added as new variant to the fmax.ini file.
+
+16/1/2010 Fixed bug in Shatranj result claims.
+          Flip eval sign when side-to-move changes through WB color command.
+          
+17/1/2010 Removed Shatranj stalemate claim again, as it was never triggered.
+
+1/11/2010 Implement counting of pieces, and extinction win condition.
+          Add engine option to allow subdivision of variant fairy.
+          Add FIDE vs Nutty Knights as variant fairy/FIDE-Nutters
+          Allow white and black to promote to a different piece type.
+
+2/11/2010 Implement duple-check rule.
+          Add Spartan Chess as variant to fmax.ini.
+          Update docs.
+
+1/12/2010 Version 4.8Q, implementing a reverse setup command for sending
+          pieceToCharTable and initial position to the GUI, sub-specification
+          of variant fairy through an engine-defined option, allowing Seirawan-
+          type gating moves in search. Seirawan Chess is added as new variant,
+          plus several new combinations of Chess with different armies
+
+7/10/2011 Version 4.8R, keeping better track of which pieces are virgin in a
+          setup position, and have a better distinction between use of the '4'
+          move-rights code between an initial double-step jump without e.p.
+          rights (as could so far only be used for Pawns, as the Spartan
+          Hoplite), and castlings. As a result even royal pieces can now get
+          an initial double-step other than castling, which has been used to
+          implement Cambodian Chess as a sub-variant of Makruk (selected
+          through a new option). Falcon Chess was added as a new variant.
+
+12/2/2013 Version 4.8S. Fixes a lot of bugs:
+          * Setting up Seirawan positions with ungated pieces
+          * Making Seirawan gating with already gated pieces illegal
+          * Fix undo in Seirawan (by remembering gatings)
+          * Recognizing drop moves as illegal moves
+          * Hash-table was only half used
+          * Spurious result claims after under-promotion
+          * False mate claims in Spartan when promotion to K was possible
+          * Fix bug in Berolina e.p. capture that is actually non-capture
+          * Fix conditions for check extension on capture of checker
+          * Fix Clear Hash option, which did not work at all
+          * Fix addition of 6th & 7th-rank Pawn bonus when setting up position
+          * Adapt score by true piece value in case of (under-)promotion
+          In addition it prints msec-accurate timing info,
+          and can implement limited range sliders of range up to 5.
+          Some game definitions using the Remarkable Rookies army (which
+          uses a range-4 Rook) have been added as sub-variants of fairy.
+
+8/9/2014  Version 4.8T. Three bug fixes, some enhancements, two new variants:
+          * mark Rook non-virgin after castling, so it cannot gate in Seirawan
+          * Fix printing of variants feature in MaxQi
+          * Sending the setup command now also works with 3rd-rank Pawns
+          * Allow sending a parent variant with 'setup'
+          * Implement new method for indicating promo-zone width = 3
+          * Implement new variant nocastle
+          * Implement new variant ASEAN Chess
+          * Add option to play Makruk with Ai-Wok in stead of Met
+
+17/10/2014 Version 4.8U. Four new variants were added:
+          * Charge of the Light Brigade
+          * King of the Hill
+          * Bifurcator Chess
+          * Team-Mate Chess
+          General game-playing enhancements:
+          * Hoppers can now be specified as hopping over friendly pieces
+          only, and the point where the second move leg starts can be
+          moved to the step just before hitting the platform.
+          * Sliders will now toggle to their secondary move only once,
+          allowing bent riders at the expense of crooked ones.
+          * Code is added to recognize the situation 'bare King', and
+          give higher award for cornering it in that case, to make mating
+          with many weak pieces (as regularly occurs in Makruk) easier.
+          * When a mate of the bare King in one corner cannot be found,
+          points will be awarded to drive the King out of that corner to
+          another one, allowing it to successfully perform KBNK-like mates.
+          * Make it possible to mark pieces as invalid promotion choice
+          Embracement of new standards:
+          * Add logo, and install it according to new 'plugin standard'
+          * Install a (new) .eng file to comply with the plugin standard
+          * Issue the (new) XBoard 'piece' command for all non-standard pieces
+          New options:
+          * Fifty-move claiming can be adapted to the need of the variant
+          * A comment line can now be displayed with each variant through
+          an 'Info' button in the engine options
+          Bugfixes, two of fatal bugs:
+          * Fix printing of Seirawan gating moves
+          * Correct the moves of the Marshal in the Rookies army of CWDA
+          * suppress emission of a spurious (garbled) setup command at startup
+          * Fix positioning of Pawns in ASEAN Chess in setup command
+
+22/10/2014 Version 4.8V. Bugfix release for 4.8U:
+          * Fixes null move, which was broken by the bare King patch, as that
+          always set material (R) to 4, not just when bare King was detected.
+
+26/1/2016 Version 5.0a
+          A rather drastic enhancement of the general capabilities:
+          * Analyze mode is supported, meaning arrival of input is tested
+          during search. Both Linux and Windows code was added for this
+          * Move exclusion during analysis is supported (feature exclude=1)
+          * The number of board ranks is no longer fixed at 8, but can have
+          any value up to 16. This required the promotion 'upgrade' to come
+          from a table pt[], rather than being derived from rank number
+          through a hard-coded expression
+          * The promotion code now uses the true value of promotion pieces in
+          the search, rather than assuming Q and correcting it at game level
+          * Pawns can start on other ranks than the 2nd, and would normally
+          start at the edge of the promotion zone as indicated by the =N
+          suffix to the board size in the ini file
+          * A negative N in the =N suffix now does affect on which rank the
+          Pawns are placed, but leaved the promotion zone depth at 1 rank
+          * A spin-off of the table-driven promotion is that the promotion
+          piece can be made file-dependent. This is currently used to set
+          the choice to the piece that starts on that square, as a side
+          effect of starting the Pawns on 4th rank
+          * Initial triple pushes of Pawns can be e.p. captured on both
+          skipped squares on 10-rank boards, when they are specified as
+          first move on the white Pawn
+          * It is possible to define on Pawns a move that is both an
+          initial triple push as well as a double push when advanced only
+          one square. This uses the code that normally would be a 5-push
+          * Any pair of royals will now be subject to the procedure of
+          bare-King detection, and increase of its centralization weight,
+          rather than just piece 3 and 4. This makes it easier to order
+          the Kings last, for better LVA move sorting
+          * Stalemate can be configured as a win, currently triggered by
+          defining value -2 for the 9th piece (which then is a royal)
+          * The castling-through-check test now can test more than the
+          3 squares starting at the King from-square, and really tests
+          upto the square next to the King destination. This would work
+          for castlings of any King stride >= 2
+          * The castling emptiness test now works for strides up to 4,
+          on boards of any width (was 3, and flaky for K-side 10-wide)
+          * Repetition detection now also is done inside the tree,
+          making it possible to plan for sacrificial perpetuals
+          * Bare-King checkmating is improved, by clearing the hash
+          table after every move (except mate scores and game history).
+          * The case with color-bound pieces is now handled by changing
+          the centralization table as soon as the bare King visits
+          a corner square into one that penalizes only the adjacent
+          two corners
+          * Against bare King all reductions are switched off, and a new
+          2-ply extension is granted on a bare King leaving a corner.
+          This speeds up finding corner mates.
+          * A variant-specific file is used to pre-charge the hash table
+          with positions that are protected from overwrite. A file for
+          Makruk to help recognizing some difficult mates is included
+          in the install
+          * New engine-defined options 'Save in hash file' (button) and
+          'Automatic persistent-hash dialog' (checkbox) can be used to
+          add positions to this persistent hash file.
+          * moves with bent trajectories can now be defined in the ini
+          file by adding the desired secondary step as third parameter
+          * clear hash on null-move switch, rather than spoiling the key
+
+          These enhancements have made it possible to add many new
+          variants, all out of reach before:
+          * Los-Alamos Chess (6x6 without Bishops)
+          * Janus Chess (10x8 with two Archbishops, stride-4 castling)
+          * Roman Chess (10x10, with two Commoners)
+          * Mexican Chess (10x10 with 2 Camels and Pawn triple-push)
+          * Ciccolini's Chess (10x10 with Adjutants (BDD) and Zebras)
+          * Grande Acedrex (12x12, game from 1283AD with bent sliders)
+          * almost-Wildebeest (11x10, with Gnu and 2 Camels)
+
+17/2/2016 Version 5.0b
+          Mostly bug-fixes, and some small interface improvements:
+          * Input of Makruk promotion moves (broken by 5.0a) fixed
+          * Fix false game repetitions from undo messing up game history
+          * Fix dropping out of analysis mode in checkmate position
+          * Improve game-phase definition to prevent King chasing
+          * Grand Acedrex piece values set to encourage Zebra promotion
+          * Randomization obeys 'random' command, suppressed in analysis
+          * Print mate scores according to new CECP standard
+          * pieceToChar strings adapted to new XBoard piece order
